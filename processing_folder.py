@@ -1,48 +1,110 @@
-import os
+from pathlib import Path
 import shutil
-from concurrent.futures import ThreadPoolExecutor
+import os
+import concurrent.futures
+# from concurrent.futures import ThreadPoolExecuto
 
-def sort_files_by_extension(source_folder, destination_folder):
-    def process_file(file_path):
-        try:
-            file_extension = os.path.splitext(file_path)[-1].lower()
-            if file_extension:
-                destination_path = os.path.join(destination_folder, file_extension[1:])
-                os.makedirs(destination_path, exist_ok=True)
-                shutil.move(file_path, os.path.join(destination_path, os.path.basename(file_path)))
-        except Exception as e:
-            print(f"Error processing {file_path}: {e}")
 
-    with ThreadPoolExecutor(max_workers=5) as executor:
-        for root, _, files in os.walk(source_folder):
-            for file in files:
-                file_path = os.path.join(root, file)
-                executor.submit(process_file, file_path)
 
-if __name__ == "__main__":
-    source_folder = "Мотлох"  # Замініть на шлях до вашої папки "Мотлох"
-    destination_folder = "сортовані файли"  # Замініть на шлях до папки, де ви хочете зберегти сортовані файли
-    os.makedirs(destination_folder, exist_ok=True)
-    sort_files_by_extension(source_folder, destination_folder)
+def move_files(path):
 
-import multiprocessing
+   imeges = ['jpeg', 'png', 'jpg', 'svg']
+   documents = ['doc', 'docx', 'txt', 'pdf', 'xlsx', 'pptx']
+   audio = ['mp3', 'ogg', 'wav', 'amr']
+   video = ['avi', 'mp4', 'mov', 'mkv']
+   archives = ['zip', 'gz', 'tar']
+   Spisok_papok = ('imeges','documents','audio','video','archives')
+   
+   # створюєм папки
+   for folder in Spisok_papok:
+      if not os.path.exists(f'{path}\\{folder}'):
+         os.mkdir(f'{path}\\{folder}')
 
-def factorize(*numbers):
-    def worker(number):
-        factors = []
-        for i in range(1, number + 1):
-            if number % i == 0:
-                factors.append(i)
-        return factors
 
-    with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
-        results = pool.map(worker, numbers)
+   Spisok = os.listdir(path)  
+   for file in Spisok :
+         extension = file.split(".")
+            #збираю всі розширення
+       
+       
+         if  len(extension) > 1 and extension[-1].lower() in imeges :
+            old_path = os.path.join(path, file)
+            new_path = os.path.join(path,'imeges',file)
+            shutil.move(old_path,new_path) 
+            list_foto = os.listdir(os.path.join(path,'imeges')) 
+         elif  len(extension) > 1 and extension[-1].lower() in documents :
+            old_path = os.path.join(path, file)
+            new_path = os.path.join(path,'documents',file)
+            shutil.move(old_path,new_path)
+            list_doc  = os.listdir(os.path.join(path,'documents'))
+         elif  len(extension) > 1 and extension[-1].lower() in audio :
+            old_path = os.path.join(path, file)
+            new_path = os.path.join(path,'audio',file)
+            shutil.move(old_path,new_path) 
+            list_music =  os.listdir(os.path.join(path,'audio'))  
+         elif  len(extension) > 1 and extension[-1].lower() in video :
+            old_path = os.path.join(path, file)
+            new_path = os.path.join(path,'video',file)
+            shutil.move(old_path,new_path) 
+            list_video = os.listdir(os.path.join(path,'video'))  
+         elif  len(extension) > 1 and extension[-1].lower() in archives :
+            old_path = os.path.join(path, file)
+            new_path = os.path.join(path,'archives',file)
+            shutil.move(old_path,new_path)
+            list_archiv =os.listdir(os.path.join(path,'archives'))
+         else :
+            list_neizvestnie =os.listdir(os.path.join(path))
 
-    return results
 
-if __name__ == "__main__":
-    a, b, c, d = factorize(128, 255, 99999, 10651060)
-    print("a:", a)
-    print("b:", b)
-    print("c:", c)
-    print("d:", d)
+   print ({  
+              'list_music':  list_music,
+              'list_video': list_video,
+              'list_foto': list_foto,
+              'list_doc': list_doc,
+              'list_archiv': list_archiv,
+            # 'list_vse_razresh': list_vse_razresh,
+              'list_neizvestnie': list_neizvestnie,
+            })
+   
+   # list_vse_razresh = set(razresh)   
+   # list_neizvestnie = path.glob('*.*')     
+                 # Перелік всіх розширень, які скрипту невідомі.
+
+def del_pattern(path):
+
+   Spisok_papok = ('imeges','documents','audio','video','archives')
+   pattern_parsinga = path.iterdir()
+
+   for i in pattern_parsinga:
+
+               if  i.is_dir():                
+                  if i.name in Spisok_papok:
+                     print(f'Не видаляти папку  {i.name} ')
+                  else:
+                     print(f'Цю папку {i.name} потрібно видалити')   
+                     try:
+                           os.rmdir(i)
+                     except: OSError
+                     else:
+                           print(f' Папка {i} видалена')
+                     finally:
+                           print('Зробленно  -----')
+
+   
+
+if __name__ == '__main__': 
+      while True:
+                path = Path(input('Enter the path of the folder where you want to sort files\n("Введіть путь папки де потрібно зробити сортування файлів"): '))
+                if len(str(path)) <= 1:
+                    print ("--You didn't lead anything, try another path\n   ('ви нічого не вели, спробуй другой шляx')\n--------------------------------------")
+                     
+                else :      
+                    try:
+                        executor =  concurrent.futures.ThreadPoolExecutor(4)
+                        executor.submit(move_files,path)
+                        del_pattern(path)
+                        break
+                    except :
+                        print ('The path to the folder was not found\n ("Путь к папке не знайден")\n ------------------------------------------------------------------ ')
+                        break
+      
